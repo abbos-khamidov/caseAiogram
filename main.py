@@ -87,6 +87,33 @@ async def navigate_handler(callback: CallbackQuery):
 
     await callback.answer()
 
+@dp.callback_query(F.data == 'add')
+async def add_to_cart(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    index = user_positions.get(user_id, 0)
+
+    user_cart.setdefault(user_id, [])
+    user_cart[user_id].append(products[index])
+
+    await callback.answer('Added to cart', show_alert=False)
+
+
+@dp.message(F.text == 'Cart')
+async def cart_handler(message: Message):
+    cart = user_cart.get(message.from_user.id, [])
+
+    if not cart:
+        await message.answer('Cart is empty')
+        return
+    
+    total = sum(item['price'] for item in cart)
+    text = 'Your cart:\n\n'
+    for i, item in enumerate(cart, 1):
+        text += f'{i}. {item['name']} - ${item['price']}\n'
+    text += f'All in: {total}'
+
+    await message.answer(text)
+
 async def main():
     await dp.start_polling(bot)
 
